@@ -1,0 +1,18 @@
+name: Fix icon link
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          if ! grep -q 'apple-touch-icon' index.html; then
+            sed -i 's|</head>|    <link rel="apple-touch-icon" href="/plural-outlaws-game/apple-touch-icon.png">\n</head>|' index.html
+          fi
+          git config user.name "perlatherapygames"
+          git config user.email "heyitsperla622@gmail.com"
+          git add index.html
+          git commit -m "Add apple-touch-icon link" || echo "no changes"
+          git push
