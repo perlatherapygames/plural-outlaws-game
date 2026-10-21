@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Plural Outlaws Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Rye&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #f7e3bd;
+        --bg-deep: #f0cd8f;
+        --card: #fff8ea;
+        --card-edge: #a05a2c;
+        --ink: #4a2c14;
+        --ink-soft: #7a4a24;
+        --red: #c0392b;
+        --red-dark: #96281b;
+        --teal: #1f7a6d;
+        --teal-dark: #155e52;
+        --gold: #f2a81d;
+        --gold-dark: #c47f0a;
+        --green: #3d9970;
+        --btn: #ffffff;
+        --btn-edge: #d9b98a;
+        --shadow: rgba(90, 50, 10, 0.25);
+        --panel-outlaw: #fde7d8;
+        --panel-rule: #e2f2ec;
+        --track: #e8d3a8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #2b1a0e;
+          --bg-deep: #1f1208;
+          --card: #3d2716;
+          --card-edge: #8a5a30;
+          --ink: #fbeed3;
+          --ink-soft: #e8c9a0;
+          --btn: #54371e;
+          --btn-edge: #8a5a30;
+          --shadow: rgba(0, 0, 0, 0.5);
+          --panel-outlaw: #4d2c1a;
+          --panel-rule: #1e3d33;
+          --track: #54371e;
+        }
+      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+        background:
+          radial-gradient(circle at 15% 8%, rgba(255, 214, 120, 0.55), transparent 42%),
+          radial-gradient(circle at 88% 92%, rgba(217, 119, 60, 0.35), transparent 45%),
+          linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+        color: var(--ink);
+        min-height: 100vh;
+      }
+      .wrap {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 16px 16px 40px;
+      }
+
+      /* ---------- Header: score + progress ---------- */
+      .hud {
+        display: flex;
+        gap: 10px;
+        align-items: stretch;
+        margin-bottom: 14px;
+      }
+      .badge {
+        background: var(--card);
+        border: 3px solid var(--card-edge);
+        border-radius: 16px;
+        padding: 8px 14px;
+        box-shadow: 0 4px 0 var(--shadow);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 104px;
+      }
+      .badge .label {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+      }
+      .badge .value {
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.1;
+      }
+      .progress-box {
+        flex: 1;
+        background: var(--card);
+        border: 3px solid var(--card-edge);
+        border-radius: 16px;
+        padding: 10px 14px;
+        box-shadow: 0 4px 0 var(--shadow);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 7px;
+      }
+      .progress-label {
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+      }
+      .track {
+        height: 16px;
+        background: var(--track);
+        border-radius: 999px;
+        overflow: hidden;
+        border: 2px solid var(--card-edge);
+      }
+      .fill {
+        height: 100%;
+        width: 0%;
+        background: repeating-linear-gradient(45deg, var(--gold) 0 14px, #ffc94d 14px 28px);
+        border-radius: 999px;
+        transition: width 0.5s ease;
+      }
+
+      /* ---------- Wanted poster card ---------- */
+      .poster {
+        background: var(--card);
+        border: 4px solid var(--card-edge);
+        border-radius: 22px;
+        box-shadow: 0 8px 0 var(--shadow);
+        padding: 22px 18px 26px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .poster::before, .poster::after {
+        content: "★";
+        position: absolute;
+        top: 10px;
+        color: var(--gold);
+        font-size: 22px;
+      }
+      .poster::before { left: 14px; }
+      .poster::after { right: 14px; }
+      .wanted {
+        font-family: "Rye", serif;
+        font-size: clamp(30px, 8vw, 44px);
+        letter-spacing: 0.14em;
+        color: var(--red);
+        margin: 2px 0 0;
+        text-shadow: 2px 2px 0 rgba(150, 40, 27, 0.18);
+      }
+      .big-emoji {
+        font-size: clamp(96px, 30vw, 140px);
+        line-height: 1.15;
+        margin: 6px 0 2px;
+        display: block;
+        animation: bob 2.2s ease-in-out infinite;
+      }
+      @keyframes bob {
+        0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+        50% { transform: translateY(-8px) rotate(1.5deg); }
+      }
+      .one-label {
+        font-size: clamp(28px, 7vw, 38px);
+        font-weight: 700;
+        margin: 0;
+      }
+      .one-label .word { color: var(--red-dark); text-transform: uppercase; }
+      @media (prefers-color-scheme: dark) {
+        .one-label .word { color: #ff9d8a; }
+      }
+      .question {
+        font-size: clamp(19px, 5vw, 23px);
+        font-weight: 500;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      /* ---------- Choices ---------- */
+      .choices {
+        display: grid;
+        gap: 14px;
+        margin-top: 20px;
+      }
+      @media (min-width: 560px) {
+        .choices { grid-template-columns: 1fr 1fr 1fr; }
+      }
+      .choice {
+        font-family: inherit;
+        font-size: clamp(24px, 6vw, 30px);
+        font-weight: 700;
+        color: var(--ink);
+        background: var(--btn);
+        border: 3px solid var(--btn-edge);
+        border-radius: 18px;
+        min-height: 84px;
+        padding: 14px 10px;
+        cursor: pointer;
+        box-shadow: 0 5px 0 var(--shadow);
+        transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+        word-break: break-word;
+      }
+      .choice:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--shadow); }
+      .choice .mini { display: block; font-size: 26px; margin-bottom: 2px; }
+      .choice.correct {
+        background: #d9f5df;
+        border-color: var(--green);
+        color: #14532d;
+        animation: wiggle 0.5s ease;
+      }
+      @media (prefers-color-scheme: dark) {
+        .choice.correct { background: #1e4630; color: #b9f4cd; }
+      }
+      .choice.nope {
+        background: #f6e3d3;
+        border-color: #d99a6c;
+        opacity: 0.75;
+      }
+      .choice:disabled { cursor: default; }
+      @keyframes wiggle {
+        0%, 100% { transform: rotate(0); }
+        25% { transform: rotate(-2.5deg) scale(1.04); }
+        75% { transform: rotate(2.5deg) scale(1.04); }
+      }
+
+      /* ---------- Feedback panels ---------- */
+      .panel {
+        margin-top: 20px;
+        border-radius: 20px;
+        padding: 20px 18px;
+        text-align: center;
+        border: 3px dashed;
+        display: none;
+      }
+      .panel.show { display: block; animation: pop 0.3s ease; }
+      @keyframes pop {
+        from { transform: scale(0.94); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      .panel.outlaw { background: var(--panel-outlaw); border-color: var(--red); }
+      .panel.rule { background: var(--panel-rule); border-color: var(--teal); }
+      .panel.yeehaw { background: #fdf3d3; border-color: var(--gold-dark); }
+      @media (prefers-color-scheme: dark) {
+        .panel.yeehaw { background: #4a3a14; }
+      }
+      .panel h2 {
+        margin: 0 0 8px;
+        font-size: clamp(24px, 6vw, 32px);
+        font-weight: 700;
+      }
+      .panel p {
+        margin: 0 0 6px;
+        font-size: clamp(18px, 4.8vw, 22px);
+        font-weight: 500;
+        line-height: 1.45;
+      }
+      .panel .big-plural {
+        font-size: clamp(34px, 9vw, 48px);
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        display: block;
+        margin: 6px 0;
+      }
+      .panel .pair-line { font-size: clamp(20px, 5.4vw, 26px); font-weight: 600; }
+
+      .big-btn {
+        font-family: inherit;
+        font-size: clamp(21px, 5.5vw, 26px);
+        font-weight: 700;
+        border: none;
+        border-radius: 999px;
+        min-height: 68px;
+        padding: 14px 30px;
+        margin-top: 14px;
+        cursor: pointer;
+        width: 100%;
+        box-shadow: 0 5px 0 var(--shadow);
+        transition: transform 0.12s ease;
+      }
+      .big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--shadow); }
+      .big-btn.gold { background: var(--gold); color: #4a2c14; }
+      .big-btn.teal { background: var(--teal); color: #ffffff; }
+      .big-btn.red { background: var(--red); color: #ffffff; }
+
+      .plus-float {
+        position: fixed;
+        font-size: 34px;
+        font-weight: 700;
+        color: var(--gold-dark);
+        text-shadow: 0 2px 0 #fff, 0 0 12px rgba(255, 255, 255, 0.8);
+        pointer-events: none;
+        z-index: 60;
+        animation: floatUp 1.1s ease-out forwards;
+      }
+      @media (prefers-color-scheme: dark) {
+        .plus-float { color: #ffd166; text-shadow: 0 2px 0 #000; }
+      }
+      @keyframes floatUp {
+        from { transform: translateY(0) scale(1); opacity: 1; }
+        to { transform: translateY(-90px) scale(1.25); opacity: 0; }
+      }
+
+      /* ---------- Win screen ---------- */
+      .win { display: none; text-align: center; padding-top: 10px; }
+      .win.show { display: block; }
+      .win .trophy { font-size: 92px; display: block; animation: bob 2.2s ease-in-out infinite; }
+      .win h2 {
+        font-family: "Rye", serif;
+        font-size: clamp(30px, 8vw, 42px);
+        letter-spacing: 0.08em;
+        color: var(--red);
+        margin: 6px 0;
+      }
+      .stars { font-size: clamp(44px, 12vw, 62px); letter-spacing: 6px; margin: 6px 0; }
+      .stars .earned { display: inline-block; animation: starPop 0.5s ease backwards; }
+      .stars .earned:nth-child(2) { animation-delay: 0.25s; }
+      .stars .earned:nth-child(3) { animation-delay: 0.5s; }
+      .stars .dim { opacity: 0.25; filter: grayscale(1); }
+      @keyframes starPop {
+        from { transform: scale(0) rotate(-40deg); opacity: 0; }
+        to { transform: scale(1) rotate(0); opacity: 1; }
+      }
+      .win .final-score { font-size: clamp(24px, 6vw, 32px); font-weight: 700; margin: 8px 0 2px; }
+      .win .cheer { font-size: clamp(18px, 5vw, 22px); font-weight: 500; color: var(--ink-soft); margin: 0 0 8px; }
+      .recap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        margin: 16px 0 4px;
+      }
+      .recap span {
+        background: var(--card);
+        border: 2px solid var(--card-edge);
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 17px;
+        font-weight: 600;
+      }
+
+      #confetti-canvas {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 50;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .big-emoji, .win .trophy { animation: none; }
+        .stars .earned { animation: none; }
+      }
+    </style>
+      <link rel="apple-touch-icon" href="/plural-outlaws-game/apple-touch-icon.png">
+</head>
+  <body>
+    <canvas id="confetti-canvas"></canvas>
+    <div class="wrap">
+
+      <!-- HUD -->
+      <div class="hud">
+        <div class="badge">
+          <span class="label">⭐ Score</span>
+          <span class="value" id="score">0</span>
+        </div>
+        <div class="progress-box">
+          <div class="progress-label">
+            <span>🤠 Round <span id="round-now">1</span> of 12</span>
+            <span id="round-left"></span>
+          </div>
+          <div class="track"><div class="fill" id="fill"></div></div>
+        </div>
+      </div>
+
+      <!-- Game area -->
+      <div id="game">
+        <div class="poster">
+          <p class="wanted">WANTED</p>
+          <span class="big-emoji" id="big-emoji">🧒</span>
+          <p class="one-label">1 <span class="word" id="one-word">child</span></p>
+          <p class="question">Now there are lots! What do we call more than one? 🌵</p>
+        </div>
+
+        <div class="choices" id="choices"></div>
+
+        <!-- Correct panel -->
+        <div class="panel yeehaw" id="panel-correct">
+          <h2>Yeehaw! 🎉</h2>
+          <p class="pair-line" id="correct-line"></p>
+          <p id="correct-note"></p>
+        </div>
+
+        <!-- Wrong pick: outlaw rule panel -->
+        <div class="panel outlaw" id="panel-outlaw">
+          <h2 id="outlaw-title"></h2>
+          <p id="outlaw-text"></p>
+          <span class="big-plural" id="outlaw-plural"></span>
+          <p id="outlaw-pair"></p>
+        </div>
+
+        <!-- Wrong pick: regular rule panel -->
+        <div class="panel rule" id="panel-rule">
+          <h2>This one follows the rules! ⭐</h2>
+          <p id="rule-text"></p>
+          <span class="big-plural" id="rule-plural"></span>
+          <p id="rule-pair"></p>
+        </div>
+
+        <!-- Say it panel -->
+        <div class="panel yeehaw" id="panel-say">
+          <h2>🗣️ Say it out loud!</h2>
+          <span class="big-plural" id="say-word"></span>
+          <button class="big-btn gold" id="said-btn">I said it! +100 ⭐</button>
+        </div>
+
+        <!-- Next -->
+        <button class="big-btn teal" id="next-btn" style="display:none;">Next round ➡️</button>
+      </div>
+
+      <!-- Win screen -->
+      <div class="win" id="win">
+        <span class="trophy">🏆</span>
+        <h2>YOU DID IT, PARTNER!</h2>
+        <div class="stars" id="stars"></div>
+        <p class="final-score">Final score: <span id="final-score">0</span> ⭐</p>
+        <p class="cheer" id="cheer"></p>
+        <div class="recap" id="recap"></div>
+        <button class="big-btn red" id="again-btn">🔁 Play Again</button>
+      </div>
+
+    </div>
+
+    <script>
+      // ---------- Word bank ----------
+      // outlaw: true  = irregular plural (breaks the +s / +es rule)
+      // outlaw: false = regular plural (follows the rule)
+      var OUTLAWS = [
+        { one: "child",  many: "children", emoji: "🧒", wrong: ["childs", "childes"] },
+        { one: "foot",   many: "feet",     emoji: "🦶", wrong: ["foots", "feets"] },
+        { one: "tooth",  many: "teeth",    emoji: "🦷", wrong: ["tooths", "teeths"] },
+        { one: "mouse",  many: "mice",     emoji: "🐭", wrong: ["mouses", "mices"] },
+        { one: "goose",  many: "geese",    emoji: "🪿", wrong: ["gooses", "geeses"] },
+        { one: "man",    many: "men",      emoji: "👨", wrong: ["mans", "mens"] },
+        { one: "woman",  many: "women",    emoji: "👩", wrong: ["womans", "womens"] },
+        { one: "person", many: "people",   emoji: "🧑", wrong: ["persons", "peoples"] },
+        { one: "sheep",  many: "sheep",    emoji: "🐑", wrong: ["sheeps", "sheepes"], same: true },
+        { one: "fish",   many: "fish",     emoji: "🐟", wrong: ["fishs", "fishies"], same: true },
+        { one: "deer",   many: "deer",     emoji: "🦌", wrong: ["deers", "deeres"], same: true },
+        { one: "ox",     many: "oxen",     emoji: "🐂", wrong: ["oxes", "oxs"] }
+      ];
+      var REGULARS = [
+        { one: "cat",   many: "cats",   emoji: "🐱", wrong: ["cat", "cates"],   ending: "-s" },
+        { one: "dog",   many: "dogs",   emoji: "🐶", wrong: ["dog", "doges"],   ending: "-s" },
+        { one: "apple", many: "apples", emoji: "🍎", wrong: ["apple", "applees"], ending: "-s" },
+        { one: "box",   many: "boxes",  emoji: "📦", wrong: ["boxs", "box"],    ending: "-es" },
+        { one: "fox",   many: "foxes",  emoji: "🦊", wrong: ["foxs", "fox"],    ending: "-es" },
+        { one: "bus",   many: "buses",  emoji: "🚌", wrong: ["buss", "bus"],    ending: "-es" }
+      ];
+      var TOTAL_ROUNDS = 12;
+
+      // ---------- Helpers ----------
+      function shuffle(arr) {
+        var a = arr.slice();
+        for (var i = a.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var t = a[i]; a[i] = a[j]; a[j] = t;
+        }
+        return a;
+      }
+      function $(id) { return document.getElementById(id); }
+      function upper(w) { return w.toUpperCase(); }
+
+      // ---------- Confetti ----------
+      var canvas = $("confetti-canvas"), ctx = canvas.getContext("2d");
+      var pieces = [], rafId = null;
+      function sizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+      window.addEventListener("resize", sizeCanvas); sizeCanvas();
+      var CONF_COLORS = ["#c0392b", "#f2a81d", "#1f7a6d", "#3d9970", "#ff7b54", "#ffd166"];
+      function confettiBurst(big) {
+        var count = big ? 160 : 90;
+        for (var i = 0; i < count; i++) {
+          pieces.push({
+            x: Math.random() * canvas.width,
+            y: -20 - Math.random() * canvas.height * 0.3,
+            w: 7 + Math.random() * 7,
+            h: 10 + Math.random() * 8,
+            vy: 2.2 + Math.random() * 3.2,
+            vx: -1.4 + Math.random() * 2.8,
+            rot: Math.random() * Math.PI,
+            vr: -0.12 + Math.random() * 0.24,
+            color: CONF_COLORS[Math.floor(Math.random() * CONF_COLORS.length)]
+          });
+        }
+        if (!rafId) tickConfetti();
+      }
+      function tickConfetti() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces = pieces.filter(function (p) { return p.y < canvas.height + 30; });
+        pieces.forEach(function (p) {
+          p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        if (pieces.length) { rafId = requestAnimationFrame(tickConfetti); }
+        else { rafId = null; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+      }
+
+      function floatPoints(x, y) {
+        var el = document.createElement("div");
+        el.className = "plus-float";
+        el.textContent = "+100";
+        el.style.left = (x - 40) + "px";
+        el.style.top = (y - 20) + "px";
+        document.body.appendChild(el);
+        setTimeout(function () { el.remove(); }, 1150);
+      }
+
+      // ---------- Game state ----------
+      var deck = [], round = 0, score = 0, phase = "choose";
+      var firstTryCount = 0;
+
+      function buildDeck() {
+        // 8 outlaws + 4 regulars, shuffled together = 12 rounds
+        var outs = shuffle(OUTLAWS).slice(0, 8).map(function (w) {
+          var c = Object.assign({}, w); c.outlaw = true; return c;
+        });
+        var regs = shuffle(REGULARS).slice(0, 4).map(function (w) {
+          var c = Object.assign({}, w); c.outlaw = false; return c;
+        });
+        return shuffle(outs.concat(regs));
+      }
+
+      function addScore(n, evt) {
+        score += n;
+        $("score").textContent = score;
+        if (evt) floatPoints(evt.clientX || window.innerWidth / 2, evt.clientY || 200);
+      }
+
+      function hidePanels() {
+        ["panel-correct", "panel-outlaw", "panel-rule", "panel-say"].forEach(function (id) {
+          $(id).classList.remove("show");
+        });
+        $("next-btn").style.display = "none";
+      }
+
+      function startRound() {
+        phase = "choose";
+        var item = deck[round];
+        $("round-now").textContent = round + 1;
+        $("round-left").textContent = (TOTAL_ROUNDS - round - 1) + " to go";
+        $("fill").style.width = (round / TOTAL_ROUNDS * 100) + "%";
+        $("big-emoji").textContent = item.emoji;
+        $("one-word").textContent = item.one;
+        hidePanels();
+
+        var box = $("choices");
+        box.innerHTML = "";
+        var options = shuffle([item.many].concat(item.wrong));
+        options.forEach(function (opt) {
+          var b = document.createElement("button");
+          b.className = "choice";
+          b.innerHTML = '<span class="mini">' + item.emoji + " " + item.emoji + " " + item.emoji + '</span>' + opt;
+          b.addEventListener("click", function (evt) { pick(opt, b, evt); });
+          box.appendChild(b);
+        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function lockChoices(correctBtn) {
+        var btns = $("choices").querySelectorAll(".choice");
+        btns.forEach(function (b) {
+          b.disabled = true;
+          if (b === correctBtn) b.classList.add("correct");
+        });
+      }
+      function findCorrectBtn() {
+        var item = deck[round];
+        var btns = $("choices").querySelectorAll(".choice");
+        for (var i = 0; i < btns.length; i++) {
+          if (btns[i].textContent.indexOf(item.many) > -1 && btns[i].textContent.replace(/[^a-z]/g, "") === item.many) return btns[i];
+        }
+        // fallback: match by trailing word text
+        for (var k = 0; k < btns.length; k++) {
+          var txt = btns[k].textContent.trim().split(/\s+/).pop();
+          if (txt === item.many) return btns[k];
+        }
+        return null;
+      }
+
+      function pick(opt, btn, evt) {
+        if (phase !== "choose") return;
+        var item = deck[round];
+        if (opt === item.many) {
+          phase = "picked";
+          firstTryCount++;
+          lockChoices(btn);
+          addScore(100, evt);
+          confettiBurst(false);
+          $("correct-line").textContent = "1 " + item.one + "  →  lots of " + item.many + "!";
+          $("correct-note").textContent = item.outlaw
+            ? (item.same
+                ? "This OUTLAW is extra sneaky — the word stays exactly the same! 🤠"
+                : "You caught an OUTLAW word, cowboy! 🤠")
+            : "Right on! This word follows the rules. ⭐";
+          $("panel-correct").classList.add("show");
+          showSayIt();
+        } else {
+          phase = "rule";
+          btn.classList.add("nope");
+          btn.disabled = true;
+          var correctBtn = findCorrectBtn();
+          lockChoices(correctBtn);
+          if (item.outlaw) {
+            $("outlaw-title").textContent = upper(item.one) + " is an OUTLAW! 🤠";
+            $("outlaw-text").textContent = item.same
+              ? "Outlaws don't follow the +s rule! This sneaky outlaw doesn't change at all — the plural is:"
+              : "Outlaws don't follow the +s rule! They change into a whole new word. The plural is:";
+            $("outlaw-plural").textContent = upper(item.many);
+            $("outlaw-pair").textContent = "1 " + item.one + "  →  lots of " + item.many;
+            $("panel-outlaw").classList.add("show");
+          } else {
+            $("rule-text").textContent = "This word is a rule-follower. Just add " + item.ending + " to " + upper(item.one) + ":";
+            $("rule-plural").textContent = upper(item.many);
+            $("rule-pair").textContent = "1 " + item.one + "  →  lots of " + item.many;
+            $("panel-rule").classList.add("show");
+          }
+          showSayIt();
+        }
+      }
+
+      function showSayIt() {
+        var item = deck[round];
+        $("say-word").textContent = upper(item.many);
+        $("panel-say").classList.add("show");
+        setTimeout(function () {
+          $("panel-say").scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }, 60);
+      }
+
+      $("said-btn").addEventListener("click", function (evt) {
+        if (phase !== "picked" && phase !== "rule") return;
+        phase = "said";
+        addScore(100, evt);
+        confettiBurst(false);
+        $("panel-say").classList.remove("show");
+        var last = round === TOTAL_ROUNDS - 1;
+        var nb = $("next-btn");
+        nb.textContent = last ? "See my stars! 🏆" : "Next round ➡️";
+        nb.style.display = "block";
+        nb.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+
+      $("next-btn").addEventListener("click", function () {
+        round++;
+        if (round >= TOTAL_ROUNDS) { showWin(); }
+        else { startRound(); }
+      });
+
+      function showWin() {
+        $("game").style.display = "none";
+        $("fill").style.width = "100%";
+        $("round-now").textContent = TOTAL_ROUNDS;
+        $("round-left").textContent = "All done! 🎉";
+        $("final-score").textContent = score;
+        // Stars: every round can earn 200 (pick + say). 3 stars for sharp shooting!
+        var stars = score >= 2100 ? 3 : (score >= 1500 ? 2 : 1);
+        var html = "";
+        for (var i = 0; i < 3; i++) {
+          html += i < stars ? '<span class="earned">⭐</span>' : '<span class="dim">⭐</span>';
+        }
+        $("stars").innerHTML = html;
+        $("cheer").textContent =
+          stars === 3 ? "Sharp shooter! You rounded up those outlaw words like a true sheriff! 🤠"
+          : stars === 2 ? "Great riding, partner! Those plural outlaws don't stand a chance! 🌵"
+          : "Yeehaw! You finished the whole trail. Play again to catch even more outlaws! 🐴";
+        var recap = $("recap");
+        recap.innerHTML = "";
+        deck.forEach(function (w) {
+          var s = document.createElement("span");
+          s.textContent = w.emoji + " " + w.one + " → " + w.many + (w.outlaw ? " 🤠" : "");
+          recap.appendChild(s);
+        });
+        $("win").classList.add("show");
+        confettiBurst(true);
+        setTimeout(function () { confettiBurst(true); }, 600);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      $("again-btn").addEventListener("click", function () {
+        score = 0; round = 0; firstTryCount = 0;
+        $("score").textContent = "0";
+        deck = buildDeck();
+        $("win").classList.remove("show");
+        $("game").style.display = "block";
+        startRound();
+      });
+
+      // ---------- Go! ----------
+      deck = buildDeck();
+      startRound();
+    </script>
+  </body>
+</html>
